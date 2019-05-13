@@ -8,6 +8,11 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
+
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
@@ -24,20 +29,34 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
 
                 Log.i(TAG, "in onPageFinished");
+
+                InputStream inputStream = getResources().openRawResource(R.raw.get_price);
+                BufferedReader r = new BufferedReader(new InputStreamReader(inputStream));
+
+                StringBuilder total = new StringBuilder();
+                try{
+                    for (String line; (line = r.readLine()) != null; ) {
+                        total.append(line).append('\n');
+                    }
+                }
+                catch(Exception e){
+                    throw new RuntimeException(e);
+                }
+
                 view.evaluateJavascript(
-                    "(function() { return document.evaluate(\"//th[contains(text(), 'ISBN-10')]\", document, null, XPathResult.ANY_TYPE, null).iterateNext().nextElementSibling.textContent.trim() })();",
+                    total.toString(),
                     new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String s) {
                             TextView textView = MainActivity.this.findViewById(R.id.textView);
-                            textView.setText("Scraped ISBN: " + s);
-                            Log.i(TAG, "test values: " + s);
+                            textView.setText("Scraped PRICE: $" + s);
+                            Log.i(TAG, "test value: " + s);
                         }
                     }
                 );
             }
         });
 
-        webView.loadUrl("https://www.amazon.com/Imperial-Earth/dp/9994734040/ref=tmm_pap_swatch_0?_encoding=UTF8&qid=1557678425&sr=8-3");
+        webView.loadUrl("https://www.amazon.com/gp/aw/d/0151442339/ref=tmm_hrd_title_0?ie=UTF8&qid=1557678425&sr=8-3");
     }
 }
